@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+<title>基于链表的前进撤销实现思路 - 爱音乐 | 爱编程 | 知晓同丶博客</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+    <meta name="description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？">
+<meta name="keywords" content="Javascript">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于链表的前进撤销实现思路">
+<meta property="og:url" content="https://zhixiaotong.fun/2019/08/16/redo-undo/index.html">
+<meta property="og:site_name" content="爱音乐 | 爱编程 | 知晓同丶博客">
+<meta property="og:description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://zhixiaotong.fun/gallery/thumbnails/lianbiao.jpg">
+<meta property="og:updated_time" content="2019-08-16T09:38:40.753Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于链表的前进撤销实现思路">
+<meta name="twitter:description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？">
+<meta name="twitter:image" content="https://zhixiaotong.fun/gallery/thumbnails/lianbiao.jpg">
+
+
+
+
+
+
+
+<link rel="icon" href="/images/favicon.ico">
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-light.css">
+
+
+    
+    
+    
+    <style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+    
+
+    
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+    
+
+    
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
+
+
+    
+    
+    
+    
+
+<link rel="stylesheet" href="/css/back-to-top.css">
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+    
+    
+    
+
+    
+    
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="is-3-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-logo" href="/">
+            
+                <img src="/images/logo.svg" alt="基于链表的前进撤销实现思路" height="28">
+            
+            </a>
+        </div>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item" href="/">主页</a>
+                
+                <a class="navbar-item" href="/archives">归档</a>
+                
+                <a class="navbar-item" href="/categories">分类</a>
+                
+                <a class="navbar-item" href="/tags">标签</a>
+                
+                <a class="navbar-item" href="/music">音乐</a>
+                
+                <a class="navbar-item" href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
+    
+    
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <!-- <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main"><div class="card">
+    
+    <div class="card-image">
+        <span  class="image is-7by1">
+            <img class="thumbnail" src="/gallery/thumbnails/lianbiao.jpg" alt="基于链表的前进撤销实现思路">
+        </span>
+    </div>
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2019-08-16T09:29:38.000Z">2019-08-16</time>
+                
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/前端大爆炸/">前端大爆炸</a>
+                </div>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    10 分钟 读完 (大约 1528 个字)
+                </span>
+                
+                
+                <span class="level-item has-text-grey" id="busuanzi_container_page_pv">
+                    <i class="far fa-eye"></i>
+                    本站总访问量 <span id="busuanzi_value_page_pv">0</span> 次
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                基于链表的前进撤销实现思路
+            
+        </h1>
+        <div class="content">
+            <h2 id="基于链表的考虑"><a href="#基于链表的考虑" class="headerlink" title="基于链表的考虑"></a>基于链表的考虑</h2><p>在工作中，处理一组结构类似的数据，往往会采用<strong>数组</strong>的方式。<strong>数组</strong>和<strong>链表</strong>其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？</p>
+<a id="more"></a>
+<h3 id="数组："><a href="#数组：" class="headerlink" title="数组："></a>数组：</h3><ul>
+<li>优点：数据连续存放在内存中，通过下标获取访问方便，查询效率较高。</li>
+<li>缺点：由于是顺序存储，添加或删除元素，需要操作移动其他元素，效率较低，可能会导致内存浪费。<br>###链表：</li>
+<li>优点：通过指针的移动可以快速添加或删除元素，效率较高。</li>
+<li>缺点：查找会根据指针从头遍历，无法通过下标快速定位，查询效率较低。</li>
+</ul>
+<blockquote>
+<p>二者的关系犹如<strong>矛</strong>与<strong>盾</strong>，你唯一的缺点就是没有我……</p>
+</blockquote>
+<p>前进与撤销需要多次对数据进行添加和删除，因此在实践中，我选择了链表作为存储数据的结构。当然，如果是固定存储长度的实现，比如：只存储10次操作，多于的操作废弃，这种情况下，数组长度不至于过大，也是可以通过数组实现此类工的。</p>
+<h2 id="链表选择"><a href="#链表选择" class="headerlink" title="链表选择"></a>链表选择</h2><p>链表分为单向链表和双向链表，由于前进后撤是需要前后对象的查找，因此选择双向链表。在查找上，双向链表可通过二分法的方式，头尾节点同时查找提高查询效率。</p>
+<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><p>双向链表的节点只有数据、指向前一个节点的指针和指向后一个节点的指针，在这里我声明Node作为链表的单个节点，Stack记录链表对象的状态。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Node</span>(<span class="hljs-params">ele</span>) </span>&#123;</span><br><span class="line">    <span class="hljs-keyword">this</span>.element = ele; <span class="hljs-comment">// 存储的数据</span></span><br><span class="line">    <span class="hljs-keyword">this</span>.prev = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 前驱指针：指向前一个Node</span></span><br><span class="line">    <span class="hljs-keyword">this</span>.next = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 后继指针：指向后一个Node</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Stack</span>() </span>&#123;</span><br><span class="line">    <span class="hljs-keyword">constructor</span>(maxLen) &#123;</span><br><span class="line">        <span class="hljs-keyword">this</span>.maxLen = maxLen || <span class="hljs-number">10</span>; <span class="hljs-comment">// 链表最大长度，如不加长度限制则可以不写</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.length = <span class="hljs-number">0</span>; <span class="hljs-comment">// 当前链表长度</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.head = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 头结点指针</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.tail = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 尾节点指针</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.finger = <span class="hljs-number">0</span>; <span class="hljs-comment">// 指针</span></span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="前进撤销的链表操作"><a href="#前进撤销的链表操作" class="headerlink" title="前进撤销的链表操作"></a>前进撤销的链表操作</h2><blockquote>
+<p>链表的增加、删除和清空操作，网上已经有大量代码讲述，代码类似，在此不会贴出全部代码，仅提供思路。</p>
+</blockquote>
+<h3 id="增加"><a href="#增加" class="headerlink" title="增加"></a>增加</h3><p>增加分为<strong>push</strong>（追加）和<strong>insert</strong>（插入）</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> node = <span class="hljs-keyword">new</span> Node(element); <span class="hljs-comment">// 被插入链表的节点</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><strong>push</strong>：将现有链表的tail尾指针指向<strong>node</strong>，同时前一个节点的next指针指向<strong>node</strong>。如果链表长度为0，说明没有节点被插入，直接将头结点和尾节点均指向<strong>node</strong>。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Stack</span>(<span class="hljs-title">maxLen</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="hljs-comment">/**</span></span><br><span class="line"><span class="hljs-comment">     * @param element 存储的数据</span></span><br><span class="line"><span class="hljs-comment">     */</span></span><br><span class="line">    push(element) &#123;</span><br><span class="line">        <span class="hljs-comment">// 被插入链表的节点</span></span><br><span class="line">        <span class="hljs-keyword">var</span> node = <span class="hljs-keyword">new</span> Node(element);</span><br><span class="line">        <span class="hljs-keyword">let</span> current;</span><br><span class="line">        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.length === <span class="hljs-number">0</span>) &#123;</span><br><span class="line">            <span class="hljs-keyword">this</span>.head = node;</span><br><span class="line">            <span class="hljs-keyword">this</span>.tail = node;</span><br><span class="line">        &#125; <span class="hljs-keyword">else</span> &#123;</span><br><span class="line">            current = <span class="hljs-keyword">this</span>.head</span><br><span class="line">            <span class="hljs-comment">// 循环，直至获取到当前链表的最后一个节点</span></span><br><span class="line">            <span class="hljs-keyword">while</span>(current.next) &#123;</span><br><span class="line">                current = current.next</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="hljs-comment">// 由于是双向链表，node的前置指针需要指向current，current的后继指针需要指向node</span></span><br><span class="line">            current.next = node</span><br><span class="line">            node.prev = current</span><br><span class="line">            <span class="hljs-comment">// node自然是tail尾节点</span></span><br><span class="line">            <span class="hljs-keyword">this</span>.tail = node</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="hljs-comment">// 链表长度累加</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.length++</span><br><span class="line">        <span class="hljs-comment">// 如果声明了maxLen，当length超出了maxLen，需要从链表头部开始截取第一个节点</span></span><br><span class="line">        <span class="hljs-comment">// if (this.length - 1 === this.maxLen) &#123;</span></span><br><span class="line">            <span class="hljs-comment">// this.removeNode(0);</span></span><br><span class="line">        <span class="hljs-comment">// &#125;</span></span><br><span class="line">        <span class="hljs-comment">// 指针变动</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.finger = <span class="hljs-keyword">this</span>.length - <span class="hljs-number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>insert</strong>：<br>插入需要指定元素被插入的<strong>下标</strong>，分为<strong>头部插入</strong>，<strong>中间插入</strong>和<strong>尾部插入</strong>三种情况，不管是哪种插入，在前进撤销操作中，被插入的node都将作为tail节点，并删除下标对应节点后续的其他节点。</p>
+</li>
+<li><p><strong>头部插入</strong>：前进撤销的头部插入，即将当前node同时指向头结点和尾节点，并将原head节点的next置空。</p>
+</li>
+<li><p><strong>中间插入</strong>：遍历获取到插入节点的current，将node的prev指向到current，将current的next指向node，将node的next置空。</p>
+</li>
+<li><p><strong>尾部插入</strong>：node节点的prev指向到原tail节点（若超出maxLen，则删除链表的第一个节点）。</p>
+</li>
+</ul>
+<p>以下是部分代码：</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Stack</span>(<span class="hljs-title">maxLen</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="hljs-comment">/**</span></span><br><span class="line"><span class="hljs-comment">     * @param index 待插入的下标</span></span><br><span class="line"><span class="hljs-comment">     * @param element 存储的数据</span></span><br><span class="line"><span class="hljs-comment">     */</span></span><br><span class="line">    insert(index, element) &#123;</span><br><span class="line">        <span class="hljs-comment">// 防止越界</span></span><br><span class="line">        <span class="hljs-keyword">if</span> (position &lt; <span class="hljs-number">0</span> || position &gt;= <span class="hljs-keyword">this</span>.length) &#123;</span><br><span class="line">            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">SyntaxError</span>(<span class="hljs-string">'插入元素下标越界'</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="hljs-keyword">switch</span>(index) &#123;</span><br><span class="line">            <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>:</span><br><span class="line">                <span class="hljs-comment">// 头部插入</span></span><br><span class="line">                node.next = <span class="hljs-literal">null</span>;</span><br><span class="line">                <span class="hljs-keyword">this</span>.head = node;</span><br><span class="line">                <span class="hljs-keyword">this</span>.length = <span class="hljs-number">1</span>;</span><br><span class="line">                <span class="hljs-keyword">break</span>;</span><br><span class="line">            <span class="hljs-keyword">case</span> <span class="hljs-keyword">this</span>.length:</span><br><span class="line">                <span class="hljs-comment">// 尾部插入</span></span><br><span class="line">                <span class="hljs-keyword">var</span> tail = <span class="hljs-keyword">this</span>.tail;</span><br><span class="line">                tail.next = node;</span><br><span class="line">                node.prev = tail;</span><br><span class="line">                <span class="hljs-comment">// 累加长度</span></span><br><span class="line">                <span class="hljs-keyword">this</span>.length++;</span><br><span class="line">                <span class="hljs-comment">// 超出截取</span></span><br><span class="line">                <span class="hljs-comment">// if (this.length - 1 === this.maxLen) &#123;</span></span><br><span class="line">                    <span class="hljs-comment">// this.removeNode(0);</span></span><br><span class="line">                <span class="hljs-comment">// &#125;</span></span><br><span class="line">                <span class="hljs-keyword">break</span>;</span><br><span class="line">            <span class="hljs-keyword">default</span>:</span><br><span class="line">                <span class="hljs-comment">// 中间插入</span></span><br><span class="line">                <span class="hljs-keyword">var</span> idx = <span class="hljs-number">0</span>;</span><br><span class="line">                <span class="hljs-keyword">var</span> previous;</span><br><span class="line">                <span class="hljs-keyword">var</span> current = <span class="hljs-keyword">this</span>.head;</span><br><span class="line">                <span class="hljs-keyword">while</span> (idx &lt; index) &#123;</span><br><span class="line">                  idx++;</span><br><span class="line">                  previous = current;</span><br><span class="line">                  current = current.next;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="hljs-comment">// 添加节点之间的关联</span></span><br><span class="line">                previous.next = node;</span><br><span class="line">                current.prev = node;</span><br><span class="line">                node.prev = previous;</span><br><span class="line">                <span class="hljs-keyword">this</span>.length = idx;</span><br><span class="line">                <span class="hljs-keyword">break</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="hljs-comment">// 不管是什么操作，tail节点都是node</span></span><br><span class="line">          <span class="hljs-keyword">this</span>.tail = node;</span><br><span class="line">          <span class="hljs-comment">// 指针变动</span></span><br><span class="line">          <span class="hljs-keyword">this</span>.finger = <span class="hljs-keyword">this</span>.length <span class="hljs-number">-1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h3><p>删除同修改一样，与修改不同的是，将tail置为null，如果删除下标为0，则清空链表。</p>
+<h3 id="清空"><a href="#清空" class="headerlink" title="清空"></a>清空</h3><p>链表的清空操作很简单，只需要重置头尾节点，指针清零即可，javascript内存机制中垃圾回收机制会自动回收不再使用的数据内存，这使得我们不需要手动释放内存。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Stack</span>(<span class="hljs-title">maxLen</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="hljs-comment">// 清空</span></span><br><span class="line">    empty() &#123;</span><br><span class="line">        <span class="hljs-keyword">this</span>.head = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 重置头指针</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.tail = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 重置尾指针</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.length = <span class="hljs-number">0</span>; <span class="hljs-comment">// 重置长度</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.finger = <span class="hljs-number">0</span>; <span class="hljs-comment">// 重置指针变动</span></span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>前进撤销的基本思路是点击按钮切换Stack的finger指针下标，根据下标获取对应的Node节点，将节点中的数据返回到页面上重新渲染。</p>
+</blockquote>
+<p>至此，基于链表的前进撤销基本操作完成了，undo（撤销）和redo（前进）改变finger指针的逻辑，是不是很容易实现呢？^ _ ^</p>
+
+        </div>
+        
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/Javascript/">Javascript</a>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3>
+        <div class="buttons is-centered">
+            
+                
+<a class="button is-info donate">
+    <span class="icon is-small">
+        <i class="fab fa-alipay"></i>
+    </span>
+    <span>支付宝</span>
+    <div class="qrcode"><img src="/images/alipay.png" alt="支付宝"></div>
+</a>
+
+                
+                
+<a class="button is-success donate">
+    <span class="icon is-small">
+        <i class="fab fa-weixin"></i>
+    </span>
+    <span>微信</span>
+    <div class="qrcode"><img src="/images/wechatPay.jpg" alt="微信"></div>
+</a>
+
+                
+        </div>
+    </div>
+</div>
+
+
+    <div class="card">
+        <div class="card-content">
+            <link rel="stylesheet" href="/css/copyright.css">
+<div>
+    <ul class="post-copyright">
+      <li class="post-copyright-author">
+      <strong>作者:  </strong>知晓同丶</a>
+      </li>
+      <li class="post-copyright-link">
+      <strong>文章链接:  </strong>
+      <a href="/2019/08/16/redo-undo/" target="_blank" title="基于链表的前进撤销实现思路">https://zhixiaotong.fun/2019/08/16/redo-undo/</a>
+      </li>
+      <li class="post-copyright-license">
+        <strong>版权声明:   </strong>
+        本网志所有文章除特别声明外,均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+        许可协议。转载请注明出处!
+      </li>
+    </ul>
+</div>
+        </div>
+    </div>
+
+
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
+        
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2019/07/31/record/">
+                <span class="level-item">记录一下</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="title is-5 has-text-weight-normal">评论</h3>
+        
+<div id="valine-thread" class="content"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread' ,
+        notify: true,
+        verify: true,
+        app_id: 'UuHzD41pqIwn7QnEX9CxWkmD-MdYXbMMI',
+        app_key: 'aguUwbNiw6jJuv8CWyfvfPY9',
+        placeholder: 'just say something'
+    });
+</script>
+
+    </div>
+</div>
+</div> -->
+                <div class="column is-6-tablet is-6-desktop is-9-widescreen has-order-2 column-main"><div class="card">
+    
+    <div class="card-image">
+        <span class="image is-7by1">
+            <img class="thumbnail" src="/gallery/thumbnails/lianbiao.jpg" alt="基于链表的前进撤销实现思路">
+        </span>
+    </div>
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2019-08-16T09:29:38.000Z">2019-08-16</time>
+                
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/前端大爆炸/">前端大爆炸</a>
+                </div>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    10 分钟 读完 (大约 1528 个字)
+                </span>
+                
+                
+                <span class="level-item has-text-grey" id="busuanzi_container_page_pv">
+                    <i class="far fa-eye"></i>
+                    本站总访问量 <span id="busuanzi_value_page_pv">0</span> 次
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                基于链表的前进撤销实现思路
+            
+        </h1>
+        <div class="content">
+            <h2 id="基于链表的考虑"><a href="#基于链表的考虑" class="headerlink" title="基于链表的考虑"></a>基于链表的考虑</h2><p>在工作中，处理一组结构类似的数据，往往会采用<strong>数组</strong>的方式。<strong>数组</strong>和<strong>链表</strong>其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？</p>
+<a id="more"></a>
+<h3 id="数组："><a href="#数组：" class="headerlink" title="数组："></a>数组：</h3><ul>
+<li>优点：数据连续存放在内存中，通过下标获取访问方便，查询效率较高。</li>
+<li>缺点：由于是顺序存储，添加或删除元素，需要操作移动其他元素，效率较低，可能会导致内存浪费。<br>###链表：</li>
+<li>优点：通过指针的移动可以快速添加或删除元素，效率较高。</li>
+<li>缺点：查找会根据指针从头遍历，无法通过下标快速定位，查询效率较低。</li>
+</ul>
+<blockquote>
+<p>二者的关系犹如<strong>矛</strong>与<strong>盾</strong>，你唯一的缺点就是没有我……</p>
+</blockquote>
+<p>前进与撤销需要多次对数据进行添加和删除，因此在实践中，我选择了链表作为存储数据的结构。当然，如果是固定存储长度的实现，比如：只存储10次操作，多于的操作废弃，这种情况下，数组长度不至于过大，也是可以通过数组实现此类工的。</p>
+<h2 id="链表选择"><a href="#链表选择" class="headerlink" title="链表选择"></a>链表选择</h2><p>链表分为单向链表和双向链表，由于前进后撤是需要前后对象的查找，因此选择双向链表。在查找上，双向链表可通过二分法的方式，头尾节点同时查找提高查询效率。</p>
+<h2 id="实现思路"><a href="#实现思路" class="headerlink" title="实现思路"></a>实现思路</h2><p>双向链表的节点只有数据、指向前一个节点的指针和指向后一个节点的指针，在这里我声明Node作为链表的单个节点，Stack记录链表对象的状态。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">Node</span>(<span class="hljs-params">ele</span>) </span>&#123;</span><br><span class="line">    <span class="hljs-keyword">this</span>.element = ele; <span class="hljs-comment">// 存储的数据</span></span><br><span class="line">    <span class="hljs-keyword">this</span>.prev = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 前驱指针：指向前一个Node</span></span><br><span class="line">    <span class="hljs-keyword">this</span>.next = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 后继指针：指向后一个Node</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Stack</span>() </span>&#123;</span><br><span class="line">    <span class="hljs-keyword">constructor</span>(maxLen) &#123;</span><br><span class="line">        <span class="hljs-keyword">this</span>.maxLen = maxLen || <span class="hljs-number">10</span>; <span class="hljs-comment">// 链表最大长度，如不加长度限制则可以不写</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.length = <span class="hljs-number">0</span>; <span class="hljs-comment">// 当前链表长度</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.head = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 头结点指针</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.tail = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 尾节点指针</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.finger = <span class="hljs-number">0</span>; <span class="hljs-comment">// 指针</span></span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="前进撤销的链表操作"><a href="#前进撤销的链表操作" class="headerlink" title="前进撤销的链表操作"></a>前进撤销的链表操作</h2><blockquote>
+<p>链表的增加、删除和清空操作，网上已经有大量代码讲述，代码类似，在此不会贴出全部代码，仅提供思路。</p>
+</blockquote>
+<h3 id="增加"><a href="#增加" class="headerlink" title="增加"></a>增加</h3><p>增加分为<strong>push</strong>（追加）和<strong>insert</strong>（插入）</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> node = <span class="hljs-keyword">new</span> Node(element); <span class="hljs-comment">// 被插入链表的节点</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><strong>push</strong>：将现有链表的tail尾指针指向<strong>node</strong>，同时前一个节点的next指针指向<strong>node</strong>。如果链表长度为0，说明没有节点被插入，直接将头结点和尾节点均指向<strong>node</strong>。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Stack</span>(<span class="hljs-title">maxLen</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="hljs-comment">/**</span></span><br><span class="line"><span class="hljs-comment">     * @param element 存储的数据</span></span><br><span class="line"><span class="hljs-comment">     */</span></span><br><span class="line">    push(element) &#123;</span><br><span class="line">        <span class="hljs-comment">// 被插入链表的节点</span></span><br><span class="line">        <span class="hljs-keyword">var</span> node = <span class="hljs-keyword">new</span> Node(element);</span><br><span class="line">        <span class="hljs-keyword">let</span> current;</span><br><span class="line">        <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.length === <span class="hljs-number">0</span>) &#123;</span><br><span class="line">            <span class="hljs-keyword">this</span>.head = node;</span><br><span class="line">            <span class="hljs-keyword">this</span>.tail = node;</span><br><span class="line">        &#125; <span class="hljs-keyword">else</span> &#123;</span><br><span class="line">            current = <span class="hljs-keyword">this</span>.head</span><br><span class="line">            <span class="hljs-comment">// 循环，直至获取到当前链表的最后一个节点</span></span><br><span class="line">            <span class="hljs-keyword">while</span>(current.next) &#123;</span><br><span class="line">                current = current.next</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="hljs-comment">// 由于是双向链表，node的前置指针需要指向current，current的后继指针需要指向node</span></span><br><span class="line">            current.next = node</span><br><span class="line">            node.prev = current</span><br><span class="line">            <span class="hljs-comment">// node自然是tail尾节点</span></span><br><span class="line">            <span class="hljs-keyword">this</span>.tail = node</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="hljs-comment">// 链表长度累加</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.length++</span><br><span class="line">        <span class="hljs-comment">// 如果声明了maxLen，当length超出了maxLen，需要从链表头部开始截取第一个节点</span></span><br><span class="line">        <span class="hljs-comment">// if (this.length - 1 === this.maxLen) &#123;</span></span><br><span class="line">            <span class="hljs-comment">// this.removeNode(0);</span></span><br><span class="line">        <span class="hljs-comment">// &#125;</span></span><br><span class="line">        <span class="hljs-comment">// 指针变动</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.finger = <span class="hljs-keyword">this</span>.length - <span class="hljs-number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>insert</strong>：<br>插入需要指定元素被插入的<strong>下标</strong>，分为<strong>头部插入</strong>，<strong>中间插入</strong>和<strong>尾部插入</strong>三种情况，不管是哪种插入，在前进撤销操作中，被插入的node都将作为tail节点，并删除下标对应节点后续的其他节点。</p>
+</li>
+<li><p><strong>头部插入</strong>：前进撤销的头部插入，即将当前node同时指向头结点和尾节点，并将原head节点的next置空。</p>
+</li>
+<li><p><strong>中间插入</strong>：遍历获取到插入节点的current，将node的prev指向到current，将current的next指向node，将node的next置空。</p>
+</li>
+<li><p><strong>尾部插入</strong>：node节点的prev指向到原tail节点（若超出maxLen，则删除链表的第一个节点）。</p>
+</li>
+</ul>
+<p>以下是部分代码：</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Stack</span>(<span class="hljs-title">maxLen</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="hljs-comment">/**</span></span><br><span class="line"><span class="hljs-comment">     * @param index 待插入的下标</span></span><br><span class="line"><span class="hljs-comment">     * @param element 存储的数据</span></span><br><span class="line"><span class="hljs-comment">     */</span></span><br><span class="line">    insert(index, element) &#123;</span><br><span class="line">        <span class="hljs-comment">// 防止越界</span></span><br><span class="line">        <span class="hljs-keyword">if</span> (position &lt; <span class="hljs-number">0</span> || position &gt;= <span class="hljs-keyword">this</span>.length) &#123;</span><br><span class="line">            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">SyntaxError</span>(<span class="hljs-string">'插入元素下标越界'</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="hljs-keyword">switch</span>(index) &#123;</span><br><span class="line">            <span class="hljs-keyword">case</span> <span class="hljs-number">0</span>:</span><br><span class="line">                <span class="hljs-comment">// 头部插入</span></span><br><span class="line">                node.next = <span class="hljs-literal">null</span>;</span><br><span class="line">                <span class="hljs-keyword">this</span>.head = node;</span><br><span class="line">                <span class="hljs-keyword">this</span>.length = <span class="hljs-number">1</span>;</span><br><span class="line">                <span class="hljs-keyword">break</span>;</span><br><span class="line">            <span class="hljs-keyword">case</span> <span class="hljs-keyword">this</span>.length:</span><br><span class="line">                <span class="hljs-comment">// 尾部插入</span></span><br><span class="line">                <span class="hljs-keyword">var</span> tail = <span class="hljs-keyword">this</span>.tail;</span><br><span class="line">                tail.next = node;</span><br><span class="line">                node.prev = tail;</span><br><span class="line">                <span class="hljs-comment">// 累加长度</span></span><br><span class="line">                <span class="hljs-keyword">this</span>.length++;</span><br><span class="line">                <span class="hljs-comment">// 超出截取</span></span><br><span class="line">                <span class="hljs-comment">// if (this.length - 1 === this.maxLen) &#123;</span></span><br><span class="line">                    <span class="hljs-comment">// this.removeNode(0);</span></span><br><span class="line">                <span class="hljs-comment">// &#125;</span></span><br><span class="line">                <span class="hljs-keyword">break</span>;</span><br><span class="line">            <span class="hljs-keyword">default</span>:</span><br><span class="line">                <span class="hljs-comment">// 中间插入</span></span><br><span class="line">                <span class="hljs-keyword">var</span> idx = <span class="hljs-number">0</span>;</span><br><span class="line">                <span class="hljs-keyword">var</span> previous;</span><br><span class="line">                <span class="hljs-keyword">var</span> current = <span class="hljs-keyword">this</span>.head;</span><br><span class="line">                <span class="hljs-keyword">while</span> (idx &lt; index) &#123;</span><br><span class="line">                  idx++;</span><br><span class="line">                  previous = current;</span><br><span class="line">                  current = current.next;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="hljs-comment">// 添加节点之间的关联</span></span><br><span class="line">                previous.next = node;</span><br><span class="line">                current.prev = node;</span><br><span class="line">                node.prev = previous;</span><br><span class="line">                <span class="hljs-keyword">this</span>.length = idx;</span><br><span class="line">                <span class="hljs-keyword">break</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="hljs-comment">// 不管是什么操作，tail节点都是node</span></span><br><span class="line">          <span class="hljs-keyword">this</span>.tail = node;</span><br><span class="line">          <span class="hljs-comment">// 指针变动</span></span><br><span class="line">          <span class="hljs-keyword">this</span>.finger = <span class="hljs-keyword">this</span>.length <span class="hljs-number">-1</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h3><p>删除同修改一样，与修改不同的是，将tail置为null，如果删除下标为0，则清空链表。</p>
+<h3 id="清空"><a href="#清空" class="headerlink" title="清空"></a>清空</h3><p>链表的清空操作很简单，只需要重置头尾节点，指针清零即可，javascript内存机制中垃圾回收机制会自动回收不再使用的数据内存，这使得我们不需要手动释放内存。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Stack</span>(<span class="hljs-title">maxLen</span>) </span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="hljs-comment">// 清空</span></span><br><span class="line">    empty() &#123;</span><br><span class="line">        <span class="hljs-keyword">this</span>.head = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 重置头指针</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.tail = <span class="hljs-literal">null</span>; <span class="hljs-comment">// 重置尾指针</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.length = <span class="hljs-number">0</span>; <span class="hljs-comment">// 重置长度</span></span><br><span class="line">        <span class="hljs-keyword">this</span>.finger = <span class="hljs-number">0</span>; <span class="hljs-comment">// 重置指针变动</span></span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>前进撤销的基本思路是点击按钮切换Stack的finger指针下标，根据下标获取对应的Node节点，将节点中的数据返回到页面上重新渲染。</p>
+</blockquote>
+<p>至此，基于链表的前进撤销基本操作完成了，undo（撤销）和redo（前进）改变finger指针的逻辑，是不是很容易实现呢？^ _ ^</p>
+
+        </div>
+        
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/Javascript/">Javascript</a>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3>
+        <div class="buttons is-centered">
+            
+                
+<a class="button is-info donate">
+    <span class="icon is-small">
+        <i class="fab fa-alipay"></i>
+    </span>
+    <span>支付宝</span>
+    <div class="qrcode"><img src="/images/alipay.png" alt="支付宝"></div>
+</a>
+
+                
+                
+<a class="button is-success donate">
+    <span class="icon is-small">
+        <i class="fab fa-weixin"></i>
+    </span>
+    <span>微信</span>
+    <div class="qrcode"><img src="/images/wechatPay.jpg" alt="微信"></div>
+</a>
+
+                
+        </div>
+    </div>
+</div>
+
+
+    <div class="card">
+        <div class="card-content">
+            <link rel="stylesheet" href="/css/copyright.css">
+<div>
+    <ul class="post-copyright">
+      <li class="post-copyright-author">
+      <strong>作者:  </strong>知晓同丶
+      </li>
+      <li class="post-copyright-link">
+      <strong>文章链接:  </strong>
+      <a href="/2019/08/16/redo-undo/" target="_blank" title="基于链表的前进撤销实现思路">https://zhixiaotong.fun/2019/08/16/redo-undo/</a>
+      </li>
+      <li class="post-copyright-license">
+        <strong>版权声明:   </strong>
+        本网志所有文章除特别声明外,均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+        许可协议。转载请注明出处!
+      </li>
+    </ul>
+</div>
+        </div>
+    </div>
+
+
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
+        
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2019/07/31/record/">
+                <span class="level-item">记录一下</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="title is-5 has-text-weight-normal">评论</h3>
+        
+<div id="valine-thread" class="content"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#valine-thread' ,
+        notify: true,
+        verify: true,
+        app_id: 'UuHzD41pqIwn7QnEX9CxWkmD-MdYXbMMI',
+        app_key: 'aguUwbNiw6jJuv8CWyfvfPY9',
+        placeholder: 'just say something'
+    });
+</script>
+
+    </div>
+</div>
+</div>
+                
+    
+    <!-- 粘贴的部分 -->
+                              <!-- 修改，可选保留的栏 -->
+    
+    
+    
+    
+    <div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-3 column-left is-sticky">
+        
+            
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered" style="flex-shrink: 1">
+                <div>
+                    
+                        <figure class="image is-128x128 has-mb-6">
+                            <img class="is-rounded" src="/images/avatar.png" alt="知晓同丶">
+                        </figure>
+                    
+                    
+                    <p class="is-size-4 is-block">
+                        知晓同丶
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        zhixiaotong.me@qq.com
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>ChengDu, China</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        2
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        2
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        2
+                    </p>
+                </div>
+            </div>
+        </nav>
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/zhixiaotong" target="_blank">
+                关注我</a>
+        </div>
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Github" href="https://github.com/zhixiaotong">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Email" href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&amp;email=Uyk7Ois6MjwnPD00fT42EyIifTA8Pg">
+                
+                <i class="fa fa-envelope"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+        
+            
+        
+            
+
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            链接
+        </h3>
+        <ul class="menu-list">
+        
+            <li>
+                <a class="level is-mobile" href="https://hexo.io" target="_blank">
+                    <span class="level-left">
+                        <span class="level-item">Hexo</span>
+                    </span>
+                    <span class="level-right">
+                        <span class="level-item tag">hexo.io</span>
+                    </span>
+                </a>
+            </li>
+        
+            <li>
+                <a class="level is-mobile" href="http://zlang.top/" target="_blank">
+                    <span class="level-left">
+                        <span class="level-item">ZL | Her head world</span>
+                    </span>
+                    <span class="level-right">
+                        <span class="level-item tag">zlang.top</span>
+                    </span>
+                </a>
+            </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+
+
+        
+            
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            <li>
+        <a class="level is-marginless" href="/categories/前端大爆炸/">
+            <span class="level-start">
+                <span class="level-item">前端大爆炸</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/随笔/">
+            <span class="level-start">
+                <span class="level-item">随笔</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+        
+        
+            <div class="column-right-shadow is-hidden-widescreen ">
+            
+                
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2019/08/16/redo-undo/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/thumbnails/lianbiao.jpg" alt="基于链表的前进撤销实现思路">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-08-16T09:29:38.000Z">2019-08-16</time></div>
+                    <a href="/2019/08/16/redo-undo/" class="has-link-black-ter is-size-6">基于链表的前进撤销实现思路</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/前端大爆炸/">前端大爆炸</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/07/31/record/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/thumbnails/bg.jpg" alt="记录一下">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-07-31T07:20:50.000Z">2019-07-31</time></div>
+                    <a href="/2019/07/31/record/" class="has-link-black-ter is-size-6">记录一下</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/随笔/">随笔</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+            
+                <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/08/">
+                <span class="level-start">
+                    <span class="level-item">八月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/07/">
+                <span class="level-start">
+                    <span class="level-item">七月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+            
+                <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <div class="field is-grouped is-grouped-multiline">
+                
+                <div class="control">
+                    <a class="tags has-addons" href="/tags/Javascript/">
+                        <span class="tag">Javascript</span>
+                        <span class="tag is-grey">1</span>
+                    </a>
+                </div>
+                
+                <div class="control">
+                    <a class="tags has-addons" href="/tags/其他/">
+                        <span class="tag">其他</span>
+                        <span class="tag is-grey">1</span>
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+            
+                
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/Javascript/" style="font-size: 10px;">Javascript</a> <a href="/tags/其他/" style="font-size: 10px;">其他</a>
+    </div>
+</div>
+
+            
+            </div>
+        
+    </div>
+    
+                
+    
+    <!-- 粘贴的部分 -->
+    
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <a class="footer-logo is-block has-mb-6" href="/">
+                
+                    <img src="/images/logo.svg" alt="基于链表的前进撤销实现思路" height="28">
+                
+                </a>
+                <p class="is-size-7">
+                &copy; 2019 知晓同丶&nbsp;
+                Powered ❤ L&Z
+                <!-- <a href="https://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a> -->
+                </p>
+            </div>
+            <!-- 页面统计 -->
+            <div class="level-middle">
+                
+                <span id="busuanzi_container_site_pv">
+                    本站总访问量 <span id="busuanzi_value_site_pv"><i class="fa fa-spinner fa-spin"></i></span> 次
+                </span>
+                <br>
+                <span id="busuanzi_container_site_uv">
+                    您是第 <span id="busuanzi_value_site_uv"><i class="fa fa-spinner fa-spin"></i></span> 位小伙伴
+                </span>
+                <br>
+                总阅读量 <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> 次
+                
+            </div>
+            <div class="level-end">
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+
+    
+    
+    
+    <script src="/js/animation.js"></script>
+    
+
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+    
+
+    
+    
+
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
+</script>
+
+
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [
+                ['$','$'],
+                ['\\(','\\)']
+            ]
+        }
+    });
+});
+</script>
+
+    
+    
+
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script>
+    <script src="/js/clipboard.js" defer></script>
+    
+
+    
+    
+    
+
+    
+
+
+<script src="/js/main.js" defer></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么...">
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
+	<script src="//code.tidio.co/vmzwba6gigc2mcfmxcwqsdre3iwzldsp.js"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/kesyoban.model.json"},"display":{"position":"left","width":180,"height":230},"mobile":{"show":true},"log":false});</script></body>
+</html>
