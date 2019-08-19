@@ -7,19 +7,19 @@
 
 
 
-    <meta name="description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？ 数组： 优点：数据连续存放在内存中，通过下标获取访问方便，查询效率较高。 缺点：由于是顺序存储，添加或删除元素，需要操作移动其他元素，效率较低，可能会导致内存浪费。###链表： 优点：通过指针的移动可以快速添加或删除元素，效率较高。 缺点：查找会根据指针从头">
+    <meta name="description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？">
 <meta name="keywords" content="Javascript">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基于链表的前进撤销实现思路">
 <meta property="og:url" content="https://zhixiaotong.fun/2019/08/16/redo-undo/index.html">
 <meta property="og:site_name" content="爱音乐 | 爱编程 | 知晓同丶博客">
-<meta property="og:description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？ 数组： 优点：数据连续存放在内存中，通过下标获取访问方便，查询效率较高。 缺点：由于是顺序存储，添加或删除元素，需要操作移动其他元素，效率较低，可能会导致内存浪费。###链表： 优点：通过指针的移动可以快速添加或删除元素，效率较高。 缺点：查找会根据指针从头">
+<meta property="og:description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://zhixiaotong.fun/gallery/thumbnails/lianbiao.jpg">
-<meta property="og:updated_time" content="2019-08-16T09:54:44.155Z">
+<meta property="og:updated_time" content="2019-08-19T01:14:00.629Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于链表的前进撤销实现思路">
-<meta name="twitter:description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？ 数组： 优点：数据连续存放在内存中，通过下标获取访问方便，查询效率较高。 缺点：由于是顺序存储，添加或删除元素，需要操作移动其他元素，效率较低，可能会导致内存浪费。###链表： 优点：通过指针的移动可以快速添加或删除元素，效率较高。 缺点：查找会根据指针从头">
+<meta name="twitter:description" content="基于链表的考虑在工作中，处理一组结构类似的数据，往往会采用数组的方式。数组和链表其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？">
 <meta name="twitter:image" content="https://zhixiaotong.fun/gallery/thumbnails/lianbiao.jpg">
 
 
@@ -159,7 +159,7 @@
                 <span class="level-item has-text-grey">
                     
                     
-                    10 分钟 读完 (大约 1540 个字)
+                    10 分钟 读完 (大约 1561 个字)
                 </span>
                 
                 
@@ -178,6 +178,7 @@
         </h1>
         <div class="content">
             <h2 id="基于链表的考虑"><a href="#基于链表的考虑" class="headerlink" title="基于链表的考虑"></a>基于链表的考虑</h2><p>在工作中，处理一组结构类似的数据，往往会采用<strong>数组</strong>的方式。<strong>数组</strong>和<strong>链表</strong>其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？</p>
+<a id="more"></a>
 <h3 id="数组："><a href="#数组：" class="headerlink" title="数组："></a>数组：</h3><ul>
 <li>优点：数据连续存放在内存中，通过下标获取访问方便，查询效率较高。</li>
 <li>缺点：由于是顺序存储，添加或删除元素，需要操作移动其他元素，效率较低，可能会导致内存浪费。<br>###链表：</li>
@@ -221,7 +222,7 @@
 <blockquote>
 <p>前进撤销的基本思路是点击按钮切换Stack的finger指针下标，根据下标获取对应的Node节点，将节点中的数据返回到页面上重新渲染。</p>
 </blockquote>
-<p>至此，基于链表的前进撤销基本操作完成了，undo（撤销）和redo（前进）改变finger指针的逻辑，是不是很容易实现呢？^ _ ^</p>
+<p>至此，基于链表的前进撤销基本操作完成了，undo（撤销）和redo（前进）移动finger指针，通过指针指向下标获取对应链表存储的数据的逻辑，是不是很容易实现呢？^ _ ^</p>
 
         </div>
         
@@ -353,7 +354,7 @@
                 <span class="level-item has-text-grey">
                     
                     
-                    10 分钟 读完 (大约 1540 个字)
+                    10 分钟 读完 (大约 1561 个字)
                 </span>
                 
                 
@@ -372,6 +373,7 @@
         </h1>
         <div class="content">
             <h2 id="基于链表的考虑"><a href="#基于链表的考虑" class="headerlink" title="基于链表的考虑"></a>基于链表的考虑</h2><p>在工作中，处理一组结构类似的数据，往往会采用<strong>数组</strong>的方式。<strong>数组</strong>和<strong>链表</strong>其实都可以作为存储类型类似的数组的选择。为什么要选择链表呢？</p>
+<a id="more"></a>
 <h3 id="数组："><a href="#数组：" class="headerlink" title="数组："></a>数组：</h3><ul>
 <li>优点：数据连续存放在内存中，通过下标获取访问方便，查询效率较高。</li>
 <li>缺点：由于是顺序存储，添加或删除元素，需要操作移动其他元素，效率较低，可能会导致内存浪费。<br>###链表：</li>
@@ -415,7 +417,7 @@
 <blockquote>
 <p>前进撤销的基本思路是点击按钮切换Stack的finger指针下标，根据下标获取对应的Node节点，将节点中的数据返回到页面上重新渲染。</p>
 </blockquote>
-<p>至此，基于链表的前进撤销基本操作完成了，undo（撤销）和redo（前进）改变finger指针的逻辑，是不是很容易实现呢？^ _ ^</p>
+<p>至此，基于链表的前进撤销基本操作完成了，undo（撤销）和redo（前进）移动finger指针，通过指针指向下标获取对应链表存储的数据的逻辑，是不是很容易实现呢？^ _ ^</p>
 
         </div>
         
