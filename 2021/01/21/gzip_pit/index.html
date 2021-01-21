@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head><meta name="generator" content="Hexo 3.9.0">
+    <meta charset="utf-8">
+<title>使用gzip优化页面加载遇到的问题 - 爱音乐 | 爱编程 | 知晓同丶博客</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+    <meta name="description" content="背景我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
+<meta name="keywords" content="Javascript">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用gzip优化页面加载遇到的问题">
+<meta property="og:url" content="https://zhixiaotong.fun/2021/01/21/gzip_pit/index.html">
+<meta property="og:site_name" content="爱音乐 | 爱编程 | 知晓同丶博客">
+<meta property="og:description" content="背景我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://zhixiaotong.fun/gallery/thumbnails/what-is-gzip.jpg">
+<meta property="og:updated_time" content="2021-01-21T08:38:15.336Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用gzip优化页面加载遇到的问题">
+<meta name="twitter:description" content="背景我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
+<meta name="twitter:image" content="https://zhixiaotong.fun/gallery/thumbnails/what-is-gzip.jpg">
+
+
+
+
+
+
+
+<link rel="icon" href="/images/favicon.ico">
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/atom-one-light.css">
+
+
+    
+    
+    
+    <style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+    
+
+    
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+    
+
+    
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
+
+
+    
+    
+    
+    
+
+<link rel="stylesheet" href="/css/back-to-top.css">
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+    
+    
+    
+
+    
+    
+    
+        <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    
+
+    
+
+
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="is-3-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-logo" href="/">
+            
+                <img src="/images/logo.svg" alt="使用gzip优化页面加载遇到的问题" height="28">
+            
+            </a>
+        </div>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item" href="/">主页</a>
+                
+                <a class="navbar-item" href="/archives">归档</a>
+                
+                <a class="navbar-item" href="/categories">分类</a>
+                
+                <a class="navbar-item" href="/tags">标签</a>
+                
+                <a class="navbar-item" href="/music">音乐</a>
+                
+                <a class="navbar-item" href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
+    
+    
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <!-- <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main"><div class="card">
+    
+    <div class="card-image">
+        <span  class="image is-7by1">
+            <img class="thumbnail" src="/gallery/thumbnails/what-is-gzip.jpg" alt="使用gzip优化页面加载遇到的问题">
+        </span>
+    </div>
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2021-01-21T07:35:06.000Z">2021-01-21</time>
+                
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/那些年我走过的坑/">那些年我走过的坑</a>
+                </div>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    16 分钟 读完 (大约 2408 个字)
+                </span>
+                
+                
+                <span class="level-item has-text-grey" id="busuanzi_container_page_pv">
+                    <i class="far fa-eye"></i>
+                    本站总访问量 <span id="busuanzi_value_page_pv">0</span> 次
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                使用gzip优化页面加载遇到的问题
+            
+        </h1>
+        <div class="content">
+            <p><img src="https://upload-images.jianshu.io/upload_images/17756630-b0bfbc54bb9744b1.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="u=1180411375,4109830813&amp;fm=26&amp;gp=0.jpg"></p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过<a href="https://www.gulpjs.com.cn/" target="_blank" rel="noopener"><strong>gulp</strong></a>实现命令行级别输出到static目录下，避免了此类css的打包，通过<a href="https://www.npmjs.com/package/babel-plugin-equire" target="_blank" rel="noopener"><strong>equire</strong></a>插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。</p>
+<a id="more"></a>
+
+<p>但是由于多页面配置，每个页面的js都挺大的，导致进入页面不是很流畅。期间曾经尝试了gzip，栽坑里了，由于需求原因又搁置了，近期手头工作比较少，又开始了踩坑的路途。</p>
+<h2 id="为什么使用gzip？"><a href="#为什么使用gzip？" class="headerlink" title="为什么使用gzip？"></a>为什么使用gzip？</h2><p>gzip是一种通用的压缩算法，可以降低网络传输的数据量，从而提高客户端浏览器的访问速度。由于浏览器向服务器发送请求，加载服务器响应的静态资源，当资源文件过大，会导致用户感受的加载时间较长，影响用户体验。</p>
+<p>虽然浏览器还需要解压gzip文件，但这速度跟加载一个未压缩的文件相比，简直少得不要不要的了。</p>
+<p>当然，我们可以通过采用其他优化方式并用提高页面加载速度，实在无济于事了，也可以加一朵旋转的<em>小菊花</em>[狗头]，但gzip的使用能大幅降低加载时间，何乐而不为呢？</p>
+<h2 id="在打包代码时使用gzip"><a href="#在打包代码时使用gzip" class="headerlink" title="在打包代码时使用gzip"></a>在打包代码时使用gzip</h2><p>由于项目是基于vue开发，在<code>vue.config.js</code>中添加下列配置即可。（react也大同小异）</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> CompressionPlugin = <span class="hljs-built_in">require</span>(<span class="hljs-string">'compression-webpack-plugin'</span>)</span><br><span class="line">...</span><br><span class="line"><span class="hljs-built_in">module</span>.exports = &#123;</span><br><span class="line">  ...</span><br><span class="line">  chainWebpack: <span class="hljs-function"><span class="hljs-params">config</span> =&gt;</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="hljs-comment">// 就这一行，让你爽到飞</span></span><br><span class="line">    config.plugin(<span class="hljs-string">'CompressionPlugin'</span>).use(CompressionPlugin, [])</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后你就可以通过执行，查看<code>/dist/</code>文件夹下的变化了。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vue-cli-service build</span><br></pre></td></tr></table></figure>
+
+<p>如果你需要比较详细的配置gzip打包，请移步<a href="https://www.npmjs.com/package/compression-webpack-plugin" target="_blank" rel="noopener">https://www.npmjs.com/package/compression-webpack-plugin</a><br>配置里中有一个<code>deleteOriginalAssets</code>属性，意思是删除源文件，一般为<code>false</code>即可，同时保留源文件和压缩后的<code>.gz</code>后缀文件。<br>当然这不是本篇文章的重点。重点是什么？当然是<strong>坑</strong>了！</p>
+<h2 id="nginx如何配置匹配-gz文件？"><a href="#nginx如何配置匹配-gz文件？" class="headerlink" title="nginx如何配置匹配.gz文件？"></a>nginx如何配置匹配.gz文件？</h2><p>由于现在的浏览器默认支持gzip压缩，你可以在请求头里看到<code>Accept-Encoding: gzip, deflate</code>得以确认。</p>
+<p>我司服务器使用nginx做请求转发和实现简单的负载均衡。在网上，不乏有如何在nginx上开启gzip配置的博客或文章。其实蛮简单的，类似一下命令键入打开nginx配置文件：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/nginx/conf/</span><br><span class="line">vim nginx.conf</span><br></pre></td></tr></table></figure>
+
+<p>再在<code>http</code>模块下添加这么几行配置：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">gzip on; // 开启gzip</span><br><span class="line">gzip_static on; // 开启gzip静态资源</span><br><span class="line">gzip_comp_level 5; // 1-10，数值越大，压缩越狠，但越占用CPU时间，到达6左右，压缩已经不明显了</span><br><span class="line">gzip_http_version 1.1 // 1.0或1.1，nginx默认HTTP 1.1</span><br><span class="line">gzip_vary on; // 启用应答头"Vary: Accept-Encoding"</span><br><span class="line">gzip_types text/plain text/css text/javascript application/javascript application/xml application/x-httpd-php application/vnd.ms.fontobject image/jpeg image/png image/gif image/svg+xml font/ttf font/opentype font/x-woff // 压缩类型</span><br><span class="line">...</span><br><span class="line">// 其他具体配置可自行搜索，此处就不列举了</span><br></pre></td></tr></table></figure>
+
+<h3 id="gzip和gzip-static的区别"><a href="#gzip和gzip-static的区别" class="headerlink" title="gzip和gzip_static的区别"></a>gzip和gzip_static的区别</h3><ul>
+<li>gzip：实时压缩，<strong>Response Headers</strong> 中 的<strong>ETag</strong>属性存在类似 W/“***”的内容。</li>
+<li>gzip_static：优先级高于gzip，会去在目录下优先找带.gz后缀的文件，没有再获取源文件，开启了gzip_static，无须在服务器打包，节约了服务器cpu的使用。</li>
+</ul>
+<blockquote>
+<p>由于项目是在前端构建打包的时候启用了gzip，因为dist内已经有<em>.gz</em>后缀文件，<code>gzip_types</code>设置其实没啥作用（因为有了静态资源，不需要服务器实时压缩）。</p>
+</blockquote>
+<h3 id="坑点一"><a href="#坑点一" class="headerlink" title="坑点一"></a>坑点一</h3><h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><p>命令行中报错，内容如下显示：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx:[emerg] unknown directive "gzip_static" in /usr/local/nginx/conf/nginx.conf:35</span><br></pre></td></tr></table></figure>
+
+<p>意思是“gzip_static”指令未知，无法被识别。</p>
+<h4 id="解决方式"><a href="#解决方式" class="headerlink" title="解决方式"></a>解决方式</h4><p>由于安装nginx时缺少了相应配置，需要添加<code>with-http_gzip_static_module</code>配置，在此之前需要先执行以下命令：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 打开nginx脚本目录</span><br><span class="line">cd /usr/local/nginx/sbin/</span><br><span class="line">// 查看nginx的版本和既有的配置</span><br><span class="line">nginx -V</span><br></pre></td></tr></table></figure>
+
+<p>再在nginx安装目录下，重新编译和安装nginx，具体方式如下：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 打开nginx安装目录</span><br><span class="line">cd /nginx-1.9.9/</span><br><span class="line">// 添加相应配置（除gzip_static配置外，其他配置均为通过nginx -V查看显示的之前既有配置）</span><br><span class="line">./configure  --prefix=/usr/local/nginx --with-http_stub_status_module --with-http_ssl_module --with-http_flv_module --with-http_gzip_static_module</span><br><span class="line">// 编译</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>需键入<code>nginx -V</code>获取之前的configure，在之前的configure后面添加gzip_static模块</p>
+</blockquote>
+<p>然后等待进程执行完，重新启动nginx即可。</p>
+<h3 id="坑点二"><a href="#坑点二" class="headerlink" title="坑点二"></a>坑点二</h3><h4 id="问题-1"><a href="#问题-1" class="headerlink" title="问题"></a>问题</h4><p>通过以上的方式，nginx已经支持了<code>gzip_static</code>模块，以便nginx优先匹配<em>.gz</em>后缀文件返回。执行以下命令重新nginx：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/nginx/sbin/</span><br><span class="line">nginx -s reload</span><br></pre></td></tr></table></figure>
+
+<p>好吧，正常情况下，是这样的。</p>
+<p>但是…</p>
+<p>如果你打开浏览器F12，刷新页面查看资源请求，发现静态资源的<strong>Response Headers</strong>属性中却没有<code>Content-Encoding: gzip</code>。喔豁…显然配置没有生效啊！</p>
+<h4 id="解决方式-1"><a href="#解决方式-1" class="headerlink" title="解决方式"></a>解决方式</h4><p>我们现在的问题发生在重启了nginx，新添加的模块却没有生效，浏览器还是获取的源文件。此时，我就开始百度了，百度大法好啊，各种回答都出来了。</p>
+<h5 id="回答一"><a href="#回答一" class="headerlink" title="回答一"></a>回答一</h5><p>nginx没有生效，可能是你的配置有误，语法不合法？检查一下：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/nginx/sbin/</span><br><span class="line">// 添加-t执行检查</span><br><span class="line">nginx -t -C /usr/local/nginx/conf/nginx.conf</span><br></pre></td></tr></table></figure>
+
+<p>结果命令行出现以下信息：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok</span><br><span class="line">nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful</span><br></pre></td></tr></table></figure>
+
+<p>显示语法ok了，测试也通过了，说明正常启动了吧？打开浏览器，又查看了一遍资源加载……<br><img src="https://upload-images.jianshu.io/upload_images/17756630-d6da038cc0397716.gif?imageMogr2/auto-orient/strip" alt="423.gif"></p>
+<h5 id="回答二"><a href="#回答二" class="headerlink" title="回答二"></a>回答二</h5><p>第一种试过了，哭了。<br>那么nginx重启没生效，会不会是重启没成功啊？软的不行，来硬的呗。键入：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 查看nginx进程，获取到nginx主进程pid为20468</span><br><span class="line">ps -ef|grep nginx</span><br><span class="line">// 强制删除</span><br><span class="line">kill -9 20468</span><br><span class="line">// 再次执行确保进程被删除</span><br><span class="line">ps -ef|grep nginx</span><br></pre></td></tr></table></figure>
+
+<p>此时，进程中如果没有nginx，<code>kill</code>命令生效了。此时，我重新在命令行中进入nginx命令行目录，运行<code>nginx -s reload</code>，意想不到的问题出来了。</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx: [emerg] bind() to [::]:80 failed (98: Address already in use)</span><br></pre></td></tr></table></figure>
+
+<p>我又重新试了kill命令又报错：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx: [alert] kill(20468, 1) failed (3: No such process)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://upload-images.jianshu.io/upload_images/17756630-224138efbac497cf.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="u=1023318312,4042958451&amp;fm=26&amp;gp=0.jpg"><br>杀掉了主进程，却没有启动成功！<br>吓得我一个激灵看了一下页面，咦？<br>正常情况下，刷新页面，页面会由于nginx进程被<code>kill</code>导致页面无法访问。但是，页面依然能正常打开，俺不信邪，又试了好几个页面，果不其然都行。（不知道是该开心，还是该难过？）<br><img src="https://upload-images.jianshu.io/upload_images/17756630-f24f954987126828.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="u=3318123593,1248177504&amp;fm=26&amp;gp=0.jpg"><br>nginx进程都没了，为啥还能访问页面？我又又问百度了，经过多方查探，发现有回答说是可能因为程序占用了端口导致<code>kill</code>不掉。在命令行键入以下命令：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 或者netstat -ntlp | grep 80</span><br><span class="line">netstat -ntlp</span><br></pre></td></tr></table></figure>
+
+<p>查看到进程列表，或者通过<code>fuser -n tcp 80</code>查看里面是否<strong>nginx</strong>的占用？</p>
+<p>果不其然，的确有这个进程，再次通过<code>kill</code>命令删除PID进程号，再次执行之前命令，发现列表中nginx进程不复存在了。点此查看<a href="https://blog.csdn.net/nil_lu/article/details/82682385" target="_blank" rel="noopener">彻底删除nginx进程</a></p>
+<p>此时，我们刷新浏览器页面，地址访问不了了，确定nginx已经被彻底删除，此时执行<a href="https://www.cnblogs.com/codingcloud/p/5095066.html" target="_blank" rel="noopener">nginx重启命令</a>，测试<code>gzip_static</code>测试是否成功应用。不出意外，nginx应用gzip应该是成功了。此时，你应该能成功看到<strong>Request Headers</strong>中的<code>Content-Encoding: gzip</code>了，明显能感到页面加载的速度变快了。<br><img src="https://upload-images.jianshu.io/upload_images/17756630-c0b76c1cc07d9518.gif?imageMogr2/auto-orient/strip" alt="a421444a20a44623299aa10c8f22720e0cf3d70b.gif"><br>如果你经过最开始的安装<code>gzip_static</code>后没有出现后续问题，那么恭喜你没有栽坑里[狗头]。如果栽了跟头也没关系，毕竟百度大法好啊（虽然google更香…）</p>
+<p>这次记录就到这了，希望对你能有帮助~Skr，skr。。。</p>
+
+        </div>
+        
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/Javascript/">Javascript</a>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3>
+        <div class="buttons is-centered">
+            
+                
+<a class="button is-info donate">
+    <span class="icon is-small">
+        <i class="fab fa-alipay"></i>
+    </span>
+    <span>支付宝</span>
+    <div class="qrcode"><img src="/images/alipay.png" alt="支付宝"></div>
+</a>
+
+                
+                
+<a class="button is-success donate">
+    <span class="icon is-small">
+        <i class="fab fa-weixin"></i>
+    </span>
+    <span>微信</span>
+    <div class="qrcode"><img src="/images/wechatPay.jpg" alt="微信"></div>
+</a>
+
+                
+        </div>
+    </div>
+</div>
+
+
+    <div class="card">
+        <div class="card-content">
+            <link rel="stylesheet" href="/css/copyright.css">
+<div>
+    <ul class="post-copyright">
+      <li class="post-copyright-author">
+      <strong>作者:  </strong>知晓同丶</a>
+      </li>
+      <li class="post-copyright-link">
+      <strong>文章链接:  </strong>
+      <a href="/2021/01/21/gzip_pit/" target="_blank" title="使用gzip优化页面加载遇到的问题">https://zhixiaotong.fun/2021/01/21/gzip_pit/</a>
+      </li>
+      <li class="post-copyright-license">
+        <strong>版权声明:   </strong>
+        本网志所有文章除特别声明外,均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+        许可协议。转载请注明出处!
+      </li>
+    </ul>
+</div>
+        </div>
+    </div>
+
+
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
+        
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2019/09/26/canvas-optimize-performance/">
+                <span class="level-item">我用过的canvas优化方式</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="title is-5 has-text-weight-normal">评论</h3>
+        
+<div id="valine-thread" class="content"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+<script>
+    new Valine({
+        el: '#valine-thread' ,
+        notify: true,
+        verify: true,
+        app_id: 'UuHzD41pqIwn7QnEX9CxWkmD-MdYXbMMI',
+        app_key: 'aguUwbNiw6jJuv8CWyfvfPY9',
+        placeholder: 'just say something'
+    });
+</script>
+
+    </div>
+</div>
+</div> -->
+                <div class="column is-6-tablet is-6-desktop is-9-widescreen has-order-2 column-main"><div class="card">
+    
+    <div class="card-image">
+        <span class="image is-7by1">
+            <img class="thumbnail" src="/gallery/thumbnails/what-is-gzip.jpg" alt="使用gzip优化页面加载遇到的问题">
+        </span>
+    </div>
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2021-01-21T07:35:06.000Z">2021-01-21</time>
+                
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/那些年我走过的坑/">那些年我走过的坑</a>
+                </div>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    16 分钟 读完 (大约 2408 个字)
+                </span>
+                
+                
+                <span class="level-item has-text-grey" id="busuanzi_container_page_pv">
+                    <i class="far fa-eye"></i>
+                    本站总访问量 <span id="busuanzi_value_page_pv">0</span> 次
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                使用gzip优化页面加载遇到的问题
+            
+        </h1>
+        <div class="content">
+            <p><img src="https://upload-images.jianshu.io/upload_images/17756630-b0bfbc54bb9744b1.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="u=1180411375,4109830813&amp;fm=26&amp;gp=0.jpg"></p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过<a href="https://www.gulpjs.com.cn/" target="_blank" rel="noopener"><strong>gulp</strong></a>实现命令行级别输出到static目录下，避免了此类css的打包，通过<a href="https://www.npmjs.com/package/babel-plugin-equire" target="_blank" rel="noopener"><strong>equire</strong></a>插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。</p>
+<a id="more"></a>
+
+<p>但是由于多页面配置，每个页面的js都挺大的，导致进入页面不是很流畅。期间曾经尝试了gzip，栽坑里了，由于需求原因又搁置了，近期手头工作比较少，又开始了踩坑的路途。</p>
+<h2 id="为什么使用gzip？"><a href="#为什么使用gzip？" class="headerlink" title="为什么使用gzip？"></a>为什么使用gzip？</h2><p>gzip是一种通用的压缩算法，可以降低网络传输的数据量，从而提高客户端浏览器的访问速度。由于浏览器向服务器发送请求，加载服务器响应的静态资源，当资源文件过大，会导致用户感受的加载时间较长，影响用户体验。</p>
+<p>虽然浏览器还需要解压gzip文件，但这速度跟加载一个未压缩的文件相比，简直少得不要不要的了。</p>
+<p>当然，我们可以通过采用其他优化方式并用提高页面加载速度，实在无济于事了，也可以加一朵旋转的<em>小菊花</em>[狗头]，但gzip的使用能大幅降低加载时间，何乐而不为呢？</p>
+<h2 id="在打包代码时使用gzip"><a href="#在打包代码时使用gzip" class="headerlink" title="在打包代码时使用gzip"></a>在打包代码时使用gzip</h2><p>由于项目是基于vue开发，在<code>vue.config.js</code>中添加下列配置即可。（react也大同小异）</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="hljs-keyword">const</span> CompressionPlugin = <span class="hljs-built_in">require</span>(<span class="hljs-string">'compression-webpack-plugin'</span>)</span><br><span class="line">...</span><br><span class="line"><span class="hljs-built_in">module</span>.exports = &#123;</span><br><span class="line">  ...</span><br><span class="line">  chainWebpack: <span class="hljs-function"><span class="hljs-params">config</span> =&gt;</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="hljs-comment">// 就这一行，让你爽到飞</span></span><br><span class="line">    config.plugin(<span class="hljs-string">'CompressionPlugin'</span>).use(CompressionPlugin, [])</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后你就可以通过执行，查看<code>/dist/</code>文件夹下的变化了。</p>
+<figure class="highlight javascript hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vue-cli-service build</span><br></pre></td></tr></table></figure>
+
+<p>如果你需要比较详细的配置gzip打包，请移步<a href="https://www.npmjs.com/package/compression-webpack-plugin" target="_blank" rel="noopener">https://www.npmjs.com/package/compression-webpack-plugin</a><br>配置里中有一个<code>deleteOriginalAssets</code>属性，意思是删除源文件，一般为<code>false</code>即可，同时保留源文件和压缩后的<code>.gz</code>后缀文件。<br>当然这不是本篇文章的重点。重点是什么？当然是<strong>坑</strong>了！</p>
+<h2 id="nginx如何配置匹配-gz文件？"><a href="#nginx如何配置匹配-gz文件？" class="headerlink" title="nginx如何配置匹配.gz文件？"></a>nginx如何配置匹配.gz文件？</h2><p>由于现在的浏览器默认支持gzip压缩，你可以在请求头里看到<code>Accept-Encoding: gzip, deflate</code>得以确认。</p>
+<p>我司服务器使用nginx做请求转发和实现简单的负载均衡。在网上，不乏有如何在nginx上开启gzip配置的博客或文章。其实蛮简单的，类似一下命令键入打开nginx配置文件：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/nginx/conf/</span><br><span class="line">vim nginx.conf</span><br></pre></td></tr></table></figure>
+
+<p>再在<code>http</code>模块下添加这么几行配置：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">gzip on; // 开启gzip</span><br><span class="line">gzip_static on; // 开启gzip静态资源</span><br><span class="line">gzip_comp_level 5; // 1-10，数值越大，压缩越狠，但越占用CPU时间，到达6左右，压缩已经不明显了</span><br><span class="line">gzip_http_version 1.1 // 1.0或1.1，nginx默认HTTP 1.1</span><br><span class="line">gzip_vary on; // 启用应答头"Vary: Accept-Encoding"</span><br><span class="line">gzip_types text/plain text/css text/javascript application/javascript application/xml application/x-httpd-php application/vnd.ms.fontobject image/jpeg image/png image/gif image/svg+xml font/ttf font/opentype font/x-woff // 压缩类型</span><br><span class="line">...</span><br><span class="line">// 其他具体配置可自行搜索，此处就不列举了</span><br></pre></td></tr></table></figure>
+
+<h3 id="gzip和gzip-static的区别"><a href="#gzip和gzip-static的区别" class="headerlink" title="gzip和gzip_static的区别"></a>gzip和gzip_static的区别</h3><ul>
+<li>gzip：实时压缩，<strong>Response Headers</strong> 中 的<strong>ETag</strong>属性存在类似 W/“***”的内容。</li>
+<li>gzip_static：优先级高于gzip，会去在目录下优先找带.gz后缀的文件，没有再获取源文件，开启了gzip_static，无须在服务器打包，节约了服务器cpu的使用。</li>
+</ul>
+<blockquote>
+<p>由于项目是在前端构建打包的时候启用了gzip，因为dist内已经有<em>.gz</em>后缀文件，<code>gzip_types</code>设置其实没啥作用（因为有了静态资源，不需要服务器实时压缩）。</p>
+</blockquote>
+<h3 id="坑点一"><a href="#坑点一" class="headerlink" title="坑点一"></a>坑点一</h3><h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><p>命令行中报错，内容如下显示：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx:[emerg] unknown directive "gzip_static" in /usr/local/nginx/conf/nginx.conf:35</span><br></pre></td></tr></table></figure>
+
+<p>意思是“gzip_static”指令未知，无法被识别。</p>
+<h4 id="解决方式"><a href="#解决方式" class="headerlink" title="解决方式"></a>解决方式</h4><p>由于安装nginx时缺少了相应配置，需要添加<code>with-http_gzip_static_module</code>配置，在此之前需要先执行以下命令：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// 打开nginx脚本目录</span><br><span class="line">cd /usr/local/nginx/sbin/</span><br><span class="line">// 查看nginx的版本和既有的配置</span><br><span class="line">nginx -V</span><br></pre></td></tr></table></figure>
+
+<p>再在nginx安装目录下，重新编译和安装nginx，具体方式如下：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 打开nginx安装目录</span><br><span class="line">cd /nginx-1.9.9/</span><br><span class="line">// 添加相应配置（除gzip_static配置外，其他配置均为通过nginx -V查看显示的之前既有配置）</span><br><span class="line">./configure  --prefix=/usr/local/nginx --with-http_stub_status_module --with-http_ssl_module --with-http_flv_module --with-http_gzip_static_module</span><br><span class="line">// 编译</span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>需键入<code>nginx -V</code>获取之前的configure，在之前的configure后面添加gzip_static模块</p>
+</blockquote>
+<p>然后等待进程执行完，重新启动nginx即可。</p>
+<h3 id="坑点二"><a href="#坑点二" class="headerlink" title="坑点二"></a>坑点二</h3><h4 id="问题-1"><a href="#问题-1" class="headerlink" title="问题"></a>问题</h4><p>通过以上的方式，nginx已经支持了<code>gzip_static</code>模块，以便nginx优先匹配<em>.gz</em>后缀文件返回。执行以下命令重新nginx：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/nginx/sbin/</span><br><span class="line">nginx -s reload</span><br></pre></td></tr></table></figure>
+
+<p>好吧，正常情况下，是这样的。</p>
+<p>但是…</p>
+<p>如果你打开浏览器F12，刷新页面查看资源请求，发现静态资源的<strong>Response Headers</strong>属性中却没有<code>Content-Encoding: gzip</code>。喔豁…显然配置没有生效啊！</p>
+<h4 id="解决方式-1"><a href="#解决方式-1" class="headerlink" title="解决方式"></a>解决方式</h4><p>我们现在的问题发生在重启了nginx，新添加的模块却没有生效，浏览器还是获取的源文件。此时，我就开始百度了，百度大法好啊，各种回答都出来了。</p>
+<h5 id="回答一"><a href="#回答一" class="headerlink" title="回答一"></a>回答一</h5><p>nginx没有生效，可能是你的配置有误，语法不合法？检查一下：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cd /usr/local/nginx/sbin/</span><br><span class="line">// 添加-t执行检查</span><br><span class="line">nginx -t -C /usr/local/nginx/conf/nginx.conf</span><br></pre></td></tr></table></figure>
+
+<p>结果命令行出现以下信息：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">nginx: the configuration file /usr/local/nginx/conf/nginx.conf syntax is ok</span><br><span class="line">nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful</span><br></pre></td></tr></table></figure>
+
+<p>显示语法ok了，测试也通过了，说明正常启动了吧？打开浏览器，又查看了一遍资源加载……<br><img src="https://upload-images.jianshu.io/upload_images/17756630-d6da038cc0397716.gif?imageMogr2/auto-orient/strip" alt="423.gif"></p>
+<h5 id="回答二"><a href="#回答二" class="headerlink" title="回答二"></a>回答二</h5><p>第一种试过了，哭了。<br>那么nginx重启没生效，会不会是重启没成功啊？软的不行，来硬的呗。键入：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 查看nginx进程，获取到nginx主进程pid为20468</span><br><span class="line">ps -ef|grep nginx</span><br><span class="line">// 强制删除</span><br><span class="line">kill -9 20468</span><br><span class="line">// 再次执行确保进程被删除</span><br><span class="line">ps -ef|grep nginx</span><br></pre></td></tr></table></figure>
+
+<p>此时，进程中如果没有nginx，<code>kill</code>命令生效了。此时，我重新在命令行中进入nginx命令行目录，运行<code>nginx -s reload</code>，意想不到的问题出来了。</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx: [emerg] bind() to [::]:80 failed (98: Address already in use)</span><br></pre></td></tr></table></figure>
+
+<p>我又重新试了kill命令又报错：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx: [alert] kill(20468, 1) failed (3: No such process)</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://upload-images.jianshu.io/upload_images/17756630-224138efbac497cf.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="u=1023318312,4042958451&amp;fm=26&amp;gp=0.jpg"><br>杀掉了主进程，却没有启动成功！<br>吓得我一个激灵看了一下页面，咦？<br>正常情况下，刷新页面，页面会由于nginx进程被<code>kill</code>导致页面无法访问。但是，页面依然能正常打开，俺不信邪，又试了好几个页面，果不其然都行。（不知道是该开心，还是该难过？）<br><img src="https://upload-images.jianshu.io/upload_images/17756630-f24f954987126828.jpg?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="u=3318123593,1248177504&amp;fm=26&amp;gp=0.jpg"><br>nginx进程都没了，为啥还能访问页面？我又又问百度了，经过多方查探，发现有回答说是可能因为程序占用了端口导致<code>kill</code>不掉。在命令行键入以下命令：</p>
+<figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 或者netstat -ntlp | grep 80</span><br><span class="line">netstat -ntlp</span><br></pre></td></tr></table></figure>
+
+<p>查看到进程列表，或者通过<code>fuser -n tcp 80</code>查看里面是否<strong>nginx</strong>的占用？</p>
+<p>果不其然，的确有这个进程，再次通过<code>kill</code>命令删除PID进程号，再次执行之前命令，发现列表中nginx进程不复存在了。点此查看<a href="https://blog.csdn.net/nil_lu/article/details/82682385" target="_blank" rel="noopener">彻底删除nginx进程</a></p>
+<p>此时，我们刷新浏览器页面，地址访问不了了，确定nginx已经被彻底删除，此时执行<a href="https://www.cnblogs.com/codingcloud/p/5095066.html" target="_blank" rel="noopener">nginx重启命令</a>，测试<code>gzip_static</code>测试是否成功应用。不出意外，nginx应用gzip应该是成功了。此时，你应该能成功看到<strong>Request Headers</strong>中的<code>Content-Encoding: gzip</code>了，明显能感到页面加载的速度变快了。<br><img src="https://upload-images.jianshu.io/upload_images/17756630-c0b76c1cc07d9518.gif?imageMogr2/auto-orient/strip" alt="a421444a20a44623299aa10c8f22720e0cf3d70b.gif"><br>如果你经过最开始的安装<code>gzip_static</code>后没有出现后续问题，那么恭喜你没有栽坑里[狗头]。如果栽了跟头也没关系，毕竟百度大法好啊（虽然google更香…）</p>
+<p>这次记录就到这了，希望对你能有帮助~Skr，skr。。。</p>
+
+        </div>
+        
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/Javascript/">Javascript</a>
+                </div>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3>
+        <div class="buttons is-centered">
+            
+                
+<a class="button is-info donate">
+    <span class="icon is-small">
+        <i class="fab fa-alipay"></i>
+    </span>
+    <span>支付宝</span>
+    <div class="qrcode"><img src="/images/alipay.png" alt="支付宝"></div>
+</a>
+
+                
+                
+<a class="button is-success donate">
+    <span class="icon is-small">
+        <i class="fab fa-weixin"></i>
+    </span>
+    <span>微信</span>
+    <div class="qrcode"><img src="/images/wechatPay.jpg" alt="微信"></div>
+</a>
+
+                
+        </div>
+    </div>
+</div>
+
+
+    <div class="card">
+        <div class="card-content">
+            <link rel="stylesheet" href="/css/copyright.css">
+<div>
+    <ul class="post-copyright">
+      <li class="post-copyright-author">
+      <strong>作者:  </strong>知晓同丶
+      </li>
+      <li class="post-copyright-link">
+      <strong>文章链接:  </strong>
+      <a href="/2021/01/21/gzip_pit/" target="_blank" title="使用gzip优化页面加载遇到的问题">https://zhixiaotong.fun/2021/01/21/gzip_pit/</a>
+      </li>
+      <li class="post-copyright-license">
+        <strong>版权声明:   </strong>
+        本网志所有文章除特别声明外,均采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+        许可协议。转载请注明出处!
+      </li>
+    </ul>
+</div>
+        </div>
+    </div>
+
+
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
+        
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2019/09/26/canvas-optimize-performance/">
+                <span class="level-item">我用过的canvas优化方式</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="title is-5 has-text-weight-normal">评论</h3>
+        
+<div id="valine-thread" class="content"></div>
+<script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+<script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#valine-thread' ,
+        notify: true,
+        verify: true,
+        app_id: 'UuHzD41pqIwn7QnEX9CxWkmD-MdYXbMMI',
+        app_key: 'aguUwbNiw6jJuv8CWyfvfPY9',
+        placeholder: 'just say something'
+    });
+</script>
+
+    </div>
+</div>
+</div>
+                
+    
+    <!-- 粘贴的部分 -->
+                              <!-- 修改，可选保留的栏 -->
+    
+    
+    
+    
+    <div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-3 column-left is-sticky">
+        
+            
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered" style="flex-shrink: 1">
+                <div>
+                    
+                        <figure class="image is-128x128 has-mb-6">
+                            <img class="is-rounded" src="/images/avatar.png" alt="知晓同丶">
+                        </figure>
+                    
+                    
+                    <p class="is-size-4 is-block">
+                        知晓同丶
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        zhixiaotong.me@qq.com
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>ChengDu, China</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        4
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        3
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        2
+                    </p>
+                </div>
+            </div>
+        </nav>
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/zhixiaotong" target="_blank">
+                关注我</a>
+        </div>
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Github" href="https://github.com/zhixiaotong">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Email" href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&amp;email=Uyk7Ois6MjwnPD00fT42EyIifTA8Pg">
+                
+                <i class="fa fa-envelope"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+        
+            
+        
+            
+
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            链接
+        </h3>
+        <ul class="menu-list">
+        
+            <li>
+                <a class="level is-mobile" href="https://hexo.io" target="_blank">
+                    <span class="level-left">
+                        <span class="level-item">Hexo</span>
+                    </span>
+                    <span class="level-right">
+                        <span class="level-item tag">hexo.io</span>
+                    </span>
+                </a>
+            </li>
+        
+            <li>
+                <a class="level is-mobile" href="http://zlang.top/" target="_blank">
+                    <span class="level-left">
+                        <span class="level-item">ZL | Her head world</span>
+                    </span>
+                    <span class="level-right">
+                        <span class="level-item tag">zlang.top</span>
+                    </span>
+                </a>
+            </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+
+
+        
+            
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            <li>
+        <a class="level is-marginless" href="/categories/前端大爆炸/">
+            <span class="level-start">
+                <span class="level-item">前端大爆炸</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">2</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/那些年我走过的坑/">
+            <span class="level-start">
+                <span class="level-item">那些年我走过的坑</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/随笔/">
+            <span class="level-start">
+                <span class="level-item">随笔</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+        
+        
+            <div class="column-right-shadow is-hidden-widescreen ">
+            
+                
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2021/01/21/gzip_pit/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/thumbnails/what-is-gzip.jpg" alt="使用gzip优化页面加载遇到的问题">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2021-01-21T07:35:06.000Z">2021-01-21</time></div>
+                    <a href="/2021/01/21/gzip_pit/" class="has-link-black-ter is-size-6">使用gzip优化页面加载遇到的问题</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/那些年我走过的坑/">那些年我走过的坑</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/09/26/canvas-optimize-performance/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/thumbnails/lianbiao.jpg" alt="我用过的canvas优化方式">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-09-26T09:09:26.000Z">2019-09-26</time></div>
+                    <a href="/2019/09/26/canvas-optimize-performance/" class="has-link-black-ter is-size-6">我用过的canvas优化方式</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/前端大爆炸/">前端大爆炸</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/08/16/redo-undo/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/thumbnails/lianbiao.jpg" alt="基于链表的前进撤销实现思路">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-08-16T09:29:38.000Z">2019-08-16</time></div>
+                    <a href="/2019/08/16/redo-undo/" class="has-link-black-ter is-size-6">基于链表的前进撤销实现思路</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/前端大爆炸/">前端大爆炸</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2019/07/31/record/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/gallery/thumbnails/bg.jpg" alt="记录一下">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-07-31T07:20:50.000Z">2019-07-31</time></div>
+                    <a href="/2019/07/31/record/" class="has-link-black-ter is-size-6">记录一下</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/随笔/">随笔</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+            
+                <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2021/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2021</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/09/">
+                <span class="level-start">
+                    <span class="level-item">九月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/08/">
+                <span class="level-start">
+                    <span class="level-item">八月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/07/">
+                <span class="level-start">
+                    <span class="level-item">七月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+            
+                <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <div class="field is-grouped is-grouped-multiline">
+                
+                <div class="control">
+                    <a class="tags has-addons" href="/tags/Javascript/">
+                        <span class="tag">Javascript</span>
+                        <span class="tag is-grey">3</span>
+                    </a>
+                </div>
+                
+                <div class="control">
+                    <a class="tags has-addons" href="/tags/其他/">
+                        <span class="tag">其他</span>
+                        <span class="tag is-grey">1</span>
+                    </a>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+            
+                
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/Javascript/" style="font-size: 20px;">Javascript</a> <a href="/tags/其他/" style="font-size: 10px;">其他</a>
+    </div>
+</div>
+
+            
+            </div>
+        
+    </div>
+    
+                
+    
+    <!-- 粘贴的部分 -->
+    
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <a class="footer-logo is-block has-mb-6" href="/">
+                
+                    <img src="/images/logo.svg" alt="使用gzip优化页面加载遇到的问题" height="28">
+                
+                </a>
+                <p class="is-size-7">
+                &copy; 2021 知晓同丶&nbsp;
+                Powered ❤ L&Z
+                <!-- <a href="https://hexo.io/" target="_blank">Hexo</a> & <a
+                        href="https://github.com/ppoffice/hexo-theme-icarus" target="_blank">Icarus</a> -->
+                </p>
+            </div>
+            <!-- 页面统计 -->
+            <div class="level-middle">
+                
+                <span id="busuanzi_container_site_pv">
+                    本站总访问量 <span id="busuanzi_value_site_pv"><i class="fa fa-spinner fa-spin"></i></span> 次
+                </span>
+                <br>
+                <span id="busuanzi_container_site_uv">
+                    您是第 <span id="busuanzi_value_site_uv"><i class="fa fa-spinner fa-spin"></i></span> 位小伙伴
+                </span>
+                <br>
+                总阅读量 <span id="busuanzi_value_page_pv"><i class="fa fa-spinner fa-spin"></i></span> 次
+                
+            </div>
+            <div class="level-end">
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+
+    
+    
+    
+    <script src="/js/animation.js"></script>
+    
+
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+    
+
+    
+    
+
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
+</script>
+
+
+    
+    
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {
+            matchFontHeight: false
+        },
+        SVG: {
+            matchFontHeight: false
+        },
+        CommonHTML: {
+            matchFontHeight: false
+        },
+        tex2jax: {
+            inlineMath: [
+                ['$','$'],
+                ['\\(','\\)']
+            ]
+        }
+    });
+});
+</script>
+
+    
+    
+
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script>
+    <script src="/js/clipboard.js" defer></script>
+    
+
+    
+    
+    
+
+    
+
+
+<script src="/js/main.js" defer></script>
+
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么...">
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
+	<script src="//code.tidio.co/vmzwba6gigc2mcfmxcwqsdre3iwzldsp.js"></script>
+<script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"debug":false,"model":{"jsonPath":"/live2dw/assets/kesyoban.model.json"},"display":{"position":"left","width":180,"height":230},"mobile":{"show":true},"log":false});</script></body>
+</html>
