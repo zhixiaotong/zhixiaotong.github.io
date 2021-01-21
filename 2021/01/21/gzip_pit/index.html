@@ -7,19 +7,19 @@
 
 
 
-    <meta name="description" content="## 背景  我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
+    <meta name="description" content="背景我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
 <meta name="keywords" content="Javascript">
 <meta property="og:type" content="article">
 <meta property="og:title" content="使用gzip优化页面加载遇到的问题">
 <meta property="og:url" content="https://zhixiaotong.fun/2021/01/21/gzip_pit/index.html">
 <meta property="og:site_name" content="爱音乐 | 爱编程 | 知晓同丶博客">
-<meta property="og:description" content="## 背景  我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
+<meta property="og:description" content="背景我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="https://zhixiaotong.fun/gallery/thumbnails/what-is-gzip.jpg">
-<meta property="og:updated_time" content="2021-01-21T09:20:52.965Z">
+<meta property="og:updated_time" content="2021-01-21T09:27:42.461Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="使用gzip优化页面加载遇到的问题">
-<meta name="twitter:description" content="## 背景  我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
+<meta name="twitter:description" content="背景我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过gulp实现命令行级别输出到static目录下，避免了此类css的打包，通过equire插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。">
 <meta name="twitter:image" content="https://zhixiaotong.fun/gallery/thumbnails/what-is-gzip.jpg">
 
 
@@ -178,11 +178,10 @@
         </h1>
         <div class="content">
             <div style="text-align:center;">
-  <img src="https://upload-images.jianshu.io/upload_images/17756630-b0bfbc54bb9744b1.jpg" align="middle">
+  <img src="https://upload-images.jianshu.io/upload_images/17756630-b0bfbc54bb9744b1.jpg">
 </div>
-## 背景
 
-<p>我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过<a href="https://www.gulpjs.com.cn/" target="_blank" rel="noopener"><strong>gulp</strong></a>实现命令行级别输出到static目录下，避免了此类css的打包，通过<a href="https://www.npmjs.com/package/babel-plugin-equire" target="_blank" rel="noopener"><strong>equire</strong></a>插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过<a href="https://www.gulpjs.com.cn/" target="_blank" rel="noopener"><strong>gulp</strong></a>实现命令行级别输出到static目录下，避免了此类css的打包，通过<a href="https://www.npmjs.com/package/babel-plugin-equire" target="_blank" rel="noopener"><strong>equire</strong></a>插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。</p>
 <a id="more"></a>
 
 <p>但是由于多页面配置，每个页面的js都挺大的，导致进入页面不是很流畅。期间曾经尝试了gzip，栽坑里了，由于需求原因又搁置了，近期手头工作比较少，又开始了踩坑的路途。</p>
@@ -239,7 +238,7 @@
 
 <p>显示语法ok了，测试也通过了，说明正常启动了吧？打开浏览器，又查看了一遍资源加载……</p>
 <div style="text-align:center;">
-<img src="https://upload-images.jianshu.io/upload_images/17756630-d6da038cc0397716.gif" align="middle">
+  <img src="https://upload-images.jianshu.io/upload_images/17756630-d6da038cc0397716.gif">
 </div>
 
 <h5 id="回答二"><a href="#回答二" class="headerlink" title="回答二"></a>回答二</h5><p>第一种试过了，哭了。<br>那么nginx重启没生效，会不会是重启没成功啊？软的不行，来硬的呗。键入：</p>
@@ -252,16 +251,15 @@
 <figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx: [alert] kill(20468, 1) failed (3: No such process)</span><br></pre></td></tr></table></figure>
 
 <div style="text-align:center;">
-<img src="https://upload-images.jianshu.io/upload_images/17756630-224138efbac497cf.jpg" align="middle">
+<img src="https://upload-images.jianshu.io/upload_images/17756630-224138efbac497cf.jpg">
 </div>
-杀掉了主进程，却没有启动成功！
-吓得我一个激灵看了一下页面，咦？
-正常情况下，刷新页面，页面会由于nginx进程被`kill`导致页面无法访问。但是，页面依然能正常打开，俺不信邪，又试了好几个页面，果不其然都行。（不知道是该开心，还是该难过？）
-<div style="text-align:center;">
-  <img src="https://upload-images.jianshu.io/upload_images/17756630-f24f954987126828.jpg" align="middle">
-</div>
-nginx进程都没了，为啥还能访问页面？我又又问百度了，经过多方查探，发现有回答说是可能因为程序占用了端口导致`kill`不掉。在命令行键入以下命令：
 
+<p>杀掉了主进程，却没有启动成功！<br>吓得我一个激灵看了一下页面，咦？<br>正常情况下，刷新页面，页面会由于nginx进程被<code>kill</code>导致页面无法访问。但是，页面依然能正常打开，俺不信邪，又试了好几个页面，果不其然都行。（不知道是该开心，还是该难过？）</p>
+<div style="text-align:center;">
+  <img src="https://upload-images.jianshu.io/upload_images/17756630-f24f954987126828.jpg">
+</div>
+
+<p>nginx进程都没了，为啥还能访问页面？我又又问百度了，经过多方查探，发现有回答说是可能因为程序占用了端口导致<code>kill</code>不掉。在命令行键入以下命令：</p>
 <figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 或者netstat -ntlp | grep 80</span><br><span class="line">netstat -ntlp</span><br></pre></td></tr></table></figure>
 
 <p>查看到进程列表，或者通过<code>fuser -n tcp 80</code>查看里面是否<strong>nginx</strong>的占用？</p>
@@ -270,8 +268,8 @@ nginx进程都没了，为啥还能访问页面？我又又问百度了，经过
 <div style="text-align:center;">
   <img src="https://upload-images.jianshu.io/upload_images/17756630-c0b76c1cc07d9518.gif">
 </div>
-如果你经过最开始的安装`gzip_static`后没有出现后续问题，那么恭喜你没有栽坑里[狗头]。如果栽了跟头也没关系，毕竟百度大法好啊（虽然google更香...）
 
+<p>如果你经过最开始的安装<code>gzip_static</code>后没有出现后续问题，那么恭喜你没有栽坑里[狗头]。如果栽了跟头也没关系，毕竟百度大法好啊（虽然google更香…）</p>
 <p>这次记录就到这了，希望对你能有帮助~Skr</p>
 
         </div>
@@ -423,11 +421,10 @@ nginx进程都没了，为啥还能访问页面？我又又问百度了，经过
         </h1>
         <div class="content">
             <div style="text-align:center;">
-  <img src="https://upload-images.jianshu.io/upload_images/17756630-b0bfbc54bb9744b1.jpg" align="middle">
+  <img src="https://upload-images.jianshu.io/upload_images/17756630-b0bfbc54bb9744b1.jpg">
 </div>
-## 背景
 
-<p>我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过<a href="https://www.gulpjs.com.cn/" target="_blank" rel="noopener"><strong>gulp</strong></a>实现命令行级别输出到static目录下，避免了此类css的打包，通过<a href="https://www.npmjs.com/package/babel-plugin-equire" target="_blank" rel="noopener"><strong>equire</strong></a>插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>我司目前项目已经经过了很多次优化了，期间通过webpack打包实践了很多种方式，包括样式文件通过<a href="https://www.gulpjs.com.cn/" target="_blank" rel="noopener"><strong>gulp</strong></a>实现命令行级别输出到static目录下，避免了此类css的打包，通过<a href="https://www.npmjs.com/package/babel-plugin-equire" target="_blank" rel="noopener"><strong>equire</strong></a>插件实现了echarts的按需引入，换掉了momentjs替换成了轻量的dayjs，还有一些比较细的优化，在此就不一一列举了。</p>
 <a id="more"></a>
 
 <p>但是由于多页面配置，每个页面的js都挺大的，导致进入页面不是很流畅。期间曾经尝试了gzip，栽坑里了，由于需求原因又搁置了，近期手头工作比较少，又开始了踩坑的路途。</p>
@@ -484,7 +481,7 @@ nginx进程都没了，为啥还能访问页面？我又又问百度了，经过
 
 <p>显示语法ok了，测试也通过了，说明正常启动了吧？打开浏览器，又查看了一遍资源加载……</p>
 <div style="text-align:center;">
-<img src="https://upload-images.jianshu.io/upload_images/17756630-d6da038cc0397716.gif" align="middle">
+  <img src="https://upload-images.jianshu.io/upload_images/17756630-d6da038cc0397716.gif">
 </div>
 
 <h5 id="回答二"><a href="#回答二" class="headerlink" title="回答二"></a>回答二</h5><p>第一种试过了，哭了。<br>那么nginx重启没生效，会不会是重启没成功啊？软的不行，来硬的呗。键入：</p>
@@ -497,16 +494,15 @@ nginx进程都没了，为啥还能访问页面？我又又问百度了，经过
 <figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nginx: [alert] kill(20468, 1) failed (3: No such process)</span><br></pre></td></tr></table></figure>
 
 <div style="text-align:center;">
-<img src="https://upload-images.jianshu.io/upload_images/17756630-224138efbac497cf.jpg" align="middle">
+<img src="https://upload-images.jianshu.io/upload_images/17756630-224138efbac497cf.jpg">
 </div>
-杀掉了主进程，却没有启动成功！
-吓得我一个激灵看了一下页面，咦？
-正常情况下，刷新页面，页面会由于nginx进程被`kill`导致页面无法访问。但是，页面依然能正常打开，俺不信邪，又试了好几个页面，果不其然都行。（不知道是该开心，还是该难过？）
-<div style="text-align:center;">
-  <img src="https://upload-images.jianshu.io/upload_images/17756630-f24f954987126828.jpg" align="middle">
-</div>
-nginx进程都没了，为啥还能访问页面？我又又问百度了，经过多方查探，发现有回答说是可能因为程序占用了端口导致`kill`不掉。在命令行键入以下命令：
 
+<p>杀掉了主进程，却没有启动成功！<br>吓得我一个激灵看了一下页面，咦？<br>正常情况下，刷新页面，页面会由于nginx进程被<code>kill</code>导致页面无法访问。但是，页面依然能正常打开，俺不信邪，又试了好几个页面，果不其然都行。（不知道是该开心，还是该难过？）</p>
+<div style="text-align:center;">
+  <img src="https://upload-images.jianshu.io/upload_images/17756630-f24f954987126828.jpg">
+</div>
+
+<p>nginx进程都没了，为啥还能访问页面？我又又问百度了，经过多方查探，发现有回答说是可能因为程序占用了端口导致<code>kill</code>不掉。在命令行键入以下命令：</p>
 <figure class="highlight shell hljs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 或者netstat -ntlp | grep 80</span><br><span class="line">netstat -ntlp</span><br></pre></td></tr></table></figure>
 
 <p>查看到进程列表，或者通过<code>fuser -n tcp 80</code>查看里面是否<strong>nginx</strong>的占用？</p>
@@ -515,8 +511,8 @@ nginx进程都没了，为啥还能访问页面？我又又问百度了，经过
 <div style="text-align:center;">
   <img src="https://upload-images.jianshu.io/upload_images/17756630-c0b76c1cc07d9518.gif">
 </div>
-如果你经过最开始的安装`gzip_static`后没有出现后续问题，那么恭喜你没有栽坑里[狗头]。如果栽了跟头也没关系，毕竟百度大法好啊（虽然google更香...）
 
+<p>如果你经过最开始的安装<code>gzip_static</code>后没有出现后续问题，那么恭喜你没有栽坑里[狗头]。如果栽了跟头也没关系，毕竟百度大法好啊（虽然google更香…）</p>
 <p>这次记录就到这了，希望对你能有帮助~Skr</p>
 
         </div>
